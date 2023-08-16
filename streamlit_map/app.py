@@ -61,7 +61,7 @@ def upload():
             # dict_file['Bike'].append((destination_file, None))
     st.session_state["upload_state"] = list_files
 # st.button("Upload files to Sandbox", on_click=upload)
-uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=True,  #type=['gpx'],
+uploaded_files = st.file_uploader("Choose a GPX file :", accept_multiple_files=True, 
                                   on_change=upload())
 
 
