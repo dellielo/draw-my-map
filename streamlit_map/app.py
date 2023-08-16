@@ -27,7 +27,7 @@ DICT_PATH_GPX = { "Bike" : ["G:\Mon Drive\Velo\D&B Corsica\GPX/", '#0F00FF'],
 ### Afficher/ cacher des pays
 
 
-# uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=True, type=['gpx', 'GPX'])
+uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=True) #, type=['gpx', 'GPX'])
 dict_file = {}
 dict_file['Bike'] = []
 list_files = []
@@ -62,8 +62,8 @@ def upload():
     st.session_state["upload_state"] = list_files
 # st.button("Upload files to Sandbox", on_click=upload)
 
-uploaded_files = st.file_uploader("Choose a GPX file :", accept_multiple_files=True, 
-                                  on_change=upload())
+# uploaded_files = st.file_uploader("Choose a GPX file :", accept_multiple_files=True, 
+#                                   on_change=upload())
 
 
 # for uploaded_file in uploaded_files:
