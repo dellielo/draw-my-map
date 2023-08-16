@@ -1,0 +1,3 @@
+streamlit
+folium
+git+https://github.com/dellielo/draw_my_map
