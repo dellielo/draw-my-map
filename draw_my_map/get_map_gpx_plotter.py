@@ -10,7 +10,7 @@ from draw_my_map.gpxplotter_mine import (
 )
 
 import folium
-import streamlit as st 
+
 
 def build_map(the_map, DICT_PATH_GPX) :
     group_seg = {}
