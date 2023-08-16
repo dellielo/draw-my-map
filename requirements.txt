@@ -1,5 +1,6 @@
 folium
 streamlit_folium
 scikit-learn
-
+# gpxplotter
+git+https://github.com/dellielo/gpxplotter
 git+https://github.com/dellielo/draw-my-map
