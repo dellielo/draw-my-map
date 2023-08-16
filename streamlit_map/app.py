@@ -31,7 +31,7 @@ uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=Tru
 dict_file = {}
 dict_file['Bike'] = []
 list_files = []
-
+# st.session_state["upload_state"] = None
 # for uploaded_file in uploaded_files:
 #     if uploaded_file is not None:
 #         bytes_data = uploaded_file.getvalue()
@@ -71,13 +71,14 @@ def upload():
 #     dict_file['Bike'].append((uploaded_file, None))
 
 if  st.button('Create the map'):
-    # upload()
-    the_map = create_folium_map(tiles='opentopomap') #tiles='kartverket_topo4')
-    # Add pre-defined tiles:
-    add_all_tiles(the_map)
-    dict_file['Bike'] = [st.session_state["upload_state"], "#54545454"]
-    build_map(the_map, dict_file) #DICT_PATH_GPX)
-    st.session_state['map'] = the_map
+    upload()
+    if "upload_state" in st.session_state and st.session_state["upload_state"] is not None: 
+        the_map = create_folium_map(tiles='opentopomap') #tiles='kartverket_topo4')
+        # Add pre-defined tiles:
+        add_all_tiles(the_map)
+        dict_file['Bike'] = [st.session_state["upload_state"], "#54545454"]
+        build_map(the_map, dict_file) #DICT_PATH_GPX)
+        st.session_state['map'] = the_map
 
 if 'map'in st.session_state and st.session_state['map'] :
     st_data = st_folium(st.session_state['map'], width=500)
