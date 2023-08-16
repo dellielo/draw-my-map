@@ -1,4 +1,5 @@
 folium
 streamlit_folium
 gpxplotter
+sklearn
 git+https://github.com/dellielo/draw-my-map
