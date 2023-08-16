@@ -31,7 +31,6 @@ DICT_PATH_GPX = { "Bike" : ["G:\Mon Drive\Velo\D&B Corsica\GPX/", '#0F00FF'],
 dict_file = {}
 dict_file['Bike'] = []
 list_files = []
-uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=True, type=['gpx', 'GPX'])
 
 # for uploaded_file in uploaded_files:
 #     if uploaded_file is not None:
@@ -62,6 +61,8 @@ def upload():
             # dict_file['Bike'].append((destination_file, None))
     st.session_state["upload_state"] = list_files
 # st.button("Upload files to Sandbox", on_click=upload)
+uploaded_files = st.file_uploader("Choose a GPX file", accept_multiple_files=True,  #type=['gpx'],
+                                  on_change=upload())
 
 
 # for uploaded_file in uploaded_files:
@@ -69,7 +70,7 @@ def upload():
 #     dict_file['Bike'].append((uploaded_file, None))
 
 if  st.button('Create the map'):
-    upload()
+    # upload()
     the_map = create_folium_map(tiles='opentopomap') #tiles='kartverket_topo4')
     # Add pre-defined tiles:
     add_all_tiles(the_map)
