@@ -17,7 +17,16 @@
 from flask import Flask, render_template_string
 
 import folium
-from get_map import *
+from gpxplotter_mine import (
+    add_segment_to_map
+)
+import os
+from gpxplotter import (
+    read_gpx_file,
+    create_folium_map,
+    # add_segment_to_map,
+    add_all_tiles,
+)
 
 app = Flask(__name__)
 
@@ -30,36 +39,50 @@ DICT_PATH_GPX = { "Bike" : ["G:\Mon Drive\Velo\D&B Corsica\GPX/", '#0F00FF'],
 
 
 def create_map() :
-    tiles_natgeo = folium.raster_layers.TileLayer(
-    tiles='https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
-    name='NatGeo',
-    attr='attribution')
-    route_map = folium.Map(location=[42.18612968286624, 9.10649855185479], zoom_start=5, tiles=tiles_natgeo)
+    the_map = create_folium_map(tiles='kartverket_topo4')
+    # Add pre-defined tiles:
+    add_all_tiles(the_map)
     
-    list_country_show =[ 'France']
+    group_seg = {}
+    for name_group, infos_tracks in DICT_PATH_GPX.items() : 
+        
+        path_gpx, color = infos_tracks
+        all_seg = []
+        for ind_file, file in enumerate(os.listdir(path_gpx)):
+            print("ihriheriihr", ind_file)
+            if ind_file > 2 :
+                continue
+            path_gpx_test = path_gpx + file
+        
+            for track in read_gpx_file(path_gpx_test):
+                print(path_gpx_test)
+                for i, segment in enumerate(track['segments']):
+                    # print(segment.keys())
+                    segment['elevation'] = segment['elevation'] - min(segment['elevation'])
+                    # all_seg = mergeDictionary(all_seg, segment) if all_seg is not None else segment
+                    # all_seg = np.concatenate([all_seg, segment]]) if all_seg is not None else segment
+                    # print(all_seg)
+                    segment['name'] = track['name']
+                    # if segment['time'][0] < start_time :
+                    #     mark_start 
+                    all_seg.append(segment)
+        group_seg[name_group] = all_seg
 
-    route_map = draw_shape(route_map, PATH_COUNTRY, list_country_show, exclude=True)
-    route_map = draw_shape(route_map, PATH_COUNTRY, list_country_show, exclude=False)
- 
-    for name, infos_tracks in DICT_PATH_GPX.items() :
-        gpx, color = infos_tracks
-        track_velo = read_track(gpx)
-        create_polygone(route_map, track_velo, color, name) #005881') #08007A')
+    for name_group, all_seg in group_seg.items():
+        group_map = folium.FeatureGroup(name= '<span style= "color:' + color +'; background-color:white ;"> '+ name_group + '</span>')
+        for i, seg  in enumerate(all_seg) :           
+            show_cmap = False if i>0 else True # to draw 1 cmap
+            #color_by='elevation'
+            add_segment_to_map(group_map, seg, show_cmap=show_cmap, color_by='elevation', cmap='viridis', min_value=0, max_value=500)
+        group_map.add_to(the_map)
+    # if fit_bounds:
+    boundary = the_map.get_bounds()
+    the_map.fit_bounds(boundary, padding=(3, 3))
+    # the_map.add_child(colormap)
+    # Add layer control to change tiles:
+    folium.LayerControl(sortLayers=True).add_to(the_map)
 
-    folium.raster_layers.TileLayer(
-    tiles='stamenwatercolor',
-    name='Stamen',
-    attr='@dive.and.bike').add_to(route_map)
-
-    # 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}'
-    folium.raster_layers.TileLayer(
-        tiles='stamenterrain',
-        name='StamenTerrain',
-        attr='@dive.and.bike').add_to(route_map)
-
-    folium.LayerControl(collapsed=True).add_to(route_map)
-
-    return route_map
+    return the_map
 
 
 @app.route("/")
@@ -67,8 +90,6 @@ def fullscreen():
     """Simple example of a fullscreen map."""
     m = create_map()
     return m.get_root().render()
-
-
 
 
 @app.route("/iframe")
