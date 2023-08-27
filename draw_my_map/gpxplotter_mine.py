@@ -5,6 +5,13 @@ import folium
 import branca.colormap
 from gpxplotter.common import RELABEL
 
+import vincent
+import altair as alt
+alt.data_transformers.disable_max_rows()
+
+import numpy as np
+import json
+import pandas as pd
 
 TILES = {
     'kartverket_topo4': {
@@ -227,7 +234,8 @@ def add_start_top_markers(the_map, segment):
     add_marker_at(the_map, segment, -1, 'End', icon='home', color='lightgray')
 
 
-def add_segment_to_map(the_map, segment, color_by=None, cmap='viridis',
+def add_segment_to_map(the_map, segment, all_elevation, all_distance, 
+                       color_by=None, cmap='viridis',
                        line_options=None, fit_bounds=True, add_start_end=True,
                        min_value=None, max_value=None, show_cmap=True):
     """Add a segment as a line to a map.
@@ -280,11 +288,15 @@ def add_segment_to_map(the_map, segment, color_by=None, cmap='viridis',
                 <b>Date :</b> {time}</br> \
                 <b>Distance:</b> {dist:.2f} km </br> \
                 <b>Elevation:</b> {elevation:.2f} m'
-        popup=folium.Popup(txt, max_width=250)
+        popup=folium.Popup(txt) #, max_width=250)
+
+        chart = add_plot_elevation(the_map, segment, all_elevation, all_distance, txt)
+        chart.add_to(popup)
         line.add_child(popup)
 
+
     line.add_to(the_map)
-    
+
     if add_start_end:
         add_start_top_markers(the_map, segment)
     # if fit_bounds:
@@ -327,9 +339,17 @@ def add_colored_line(the_map, segment, color_by, cmap='viridis',
         levels = uniq + 1
     else:
         levels = 10
-    linmap = getattr(branca.colormap.linear, cmap)
+    linmap = None
+    if isinstance(cmap, str):
+        linmap = getattr(branca.colormap.linear, cmap)
+    elif isinstance(cmap, branca.colormap.ColorMap):
+        linmap = cmap
+    else:
+        raise Exception("Color map can be either a name of a linear map from branca.coloramp package, or a branca.colormap.ColorMap instance.")
+
     colormap = linmap.scale(minz, maxz).to_step(levels)
     colormap.caption = RELABEL.get(color_by, color_by)
+
     if line_options is None:
         line_options = {'weight': 3}
     line_options['weight'] = line_options.get('weight', 3)
@@ -371,3 +391,68 @@ def add_marker_in_json(route_map, markers_blog_path):
             folium.GeoJson(feature, style_function=lambda x: feature['properties']["_umap_options"]).add_to(layer)
 
     layer.add_to(route_map)
+
+def add_plot_elevation(the_map, segment, all_elevation, all_distance, txt):
+    idx = np.argmax(segment['elevation'])
+    
+    data = pd.DataFrame({
+        'elev_total' : all_elevation,
+        # 'elev' : ele_segment,
+        'dist' : all_distance
+    })
+
+    data['elev'] = data['elev_total']
+    data.loc[:segment['deb_ind'],'elev'] = None
+    data.loc[segment['deb_ind']+len(segment['elevation']):,'elev'] = None
+
+    
+
+    WIDTH = 250
+    HEIGHT = 100
+
+    
+    lines_tot = alt.Chart(data).mark_line(
+            strokeWidth=3
+        ).encode(
+            x=alt.X('dist', title='Distance / km full'),
+            y=alt.Y('elev_total', title='elev_total'),
+        )
+    
+    
+    lines = alt.Chart(data).mark_line(
+        strokeWidth=3
+    ).encode(
+        x=alt.X('dist', title='Distance / km full'),
+        y=alt.Y('elev', title='elev'),
+        color=alt.value('#f58c02'),
+    )
+
+    # chart = lines_tot + lines
+    chart = alt.layer(
+    lines_tot,
+    lines,
+    width=200,
+    height=50,
+    ).resolve_scale(y='shared')
+    
+    chart.title = 'Elevation'
+
+    chart_dict = json.loads(chart.to_json())
+
+    chart_vega = folium.features.VegaLite(
+        chart_dict,
+        width=300,
+        height=100
+    )
+    # popup = folium.Popup(txt = 'GRAPH !!', max_width=WIDTH+50, show=False)
+    # chart = folium.Vega(line_dict, width=WIDTH+50, height=HEIGHT+50)
+    # chart.add_to(popup)
+    # chart.add_to()
+    return chart_vega 
+
+    # marker = folium.Marker(
+    #     location=segment['latlon'][0],
+    #     popup=popup,
+    #     icon=folium.Icon(icon='star'),
+    # )
+    # marker.add_to(the_map)
